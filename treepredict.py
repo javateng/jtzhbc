@@ -89,15 +89,6 @@ def buildtree(rows, scoref= entropy):
     else :
         return decisionnode(results=uniquecounts(rows))
 
-def printtree(tree, indent='\t'):
-    if tree.results!=None:
-        print str(tree.results)
-    else:
-        print str(tree.col)+':'+str(tree.value)+'?'
-        print indent+'T->'
-        printtree(tree.tnode, indent+'\t')
-        print indent+'F->'
-        printtree(tree.fnode, indent+'\t')
 #计算叶子数
 def getwidth(tree):
     print 'x'
@@ -107,7 +98,30 @@ def getdepth(tree):
     if tree.tnode==None and tree.fnode==None: return 0
     return max(getdepth(tree.tnode), getdepth(tree.fnode))+1
 
+def classify(observation,tree):
+  if tree.results!=None:
+    return tree.results
+  else:
+    v=observation[tree.col]
+    branch=None
+    if isinstance(v,int) or isinstance(v,float):
+      if v>=tree.value: branch=tree.tnode
+      else: branch=tree.fnode
+    else:
+      if v==tree.value: branch=tree.tnode
+      else: branch=tree.fnode
+    return classify(observation,branch)
 
+def classify2(observation,tree):
+  if tree.col>=0:
+      if isinstance(tree.value,int) or isinstance(tree.value, float):
+          if observation[tree.col]>=tree.value:return classify2(observation, tree.tnode)
+          else:return classify2(observation, tree.fnode)
+      else:
+          if observation[tree.col]==tree.value:return classify2(observation, tree.tnode)
+          else:return classify2(observation, tree.fnode)
+  else :
+      return tree.results
 
 def main():
     sets = divideset(my_data, 2, 'yes')
@@ -116,9 +130,10 @@ def main():
     print '基尼不纯度：', giniimpurity(my_data)
     print '熵：', entropy(my_data)
     tree = buildtree(my_data)
-    printtree(tree)
     print '---------------------------------'
-    print getwidth(tree)
+    print classify(['google','UK','yes',18,'Basic'],tree)
+    print classify2(['google', 'UK', 'yes', 18, 'Basic'], tree)
+    print classify2(['google','France','yes',23,'Premium'], tree)
 
 if __name__ == '__main__':
     main()
